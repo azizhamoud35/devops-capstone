@@ -14,7 +14,7 @@ class TestHealthCheck:
 
     def test_health_check(self, client):
         """Health check should return 200 and OK status."""
-        resp = client.get("/api/accounts/health")
+        resp = client.get("/accounts/health")
         assert resp.status_code == status.HTTP_200_OK
         payload = resp.get_json()
         assert payload["status"] == "OK"
@@ -30,7 +30,7 @@ class TestCreateRoutes:
     def test_create_account(self, client, account_data):
         """Create a new account."""
         resp = client.post(
-            "/api/accounts",
+            "/accounts",
             json=account_data,
             content_type="application/json",
         )
@@ -43,19 +43,19 @@ class TestCreateRoutes:
 
     def test_create_account_no_data(self, client):
         """Creating an account without data should return 400."""
-        resp = client.post("/api/accounts", content_type="application/json")
+        resp = client.post("/accounts", content_type="application/json")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_account_no_content_type(self, client):
         """Creating an account without content type should return 400."""
-        resp = client.post("/api/accounts", data="no json")
+        resp = client.post("/accounts", data="no json")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_account_missing_name(self, client):
         """Creating an account with missing name should return 400."""
         data = {"email": "noname@example.com"}
         resp = client.post(
-            "/api/accounts",
+            "/accounts",
             json=data,
             content_type="application/json",
         )
@@ -65,7 +65,7 @@ class TestCreateRoutes:
         """Creating an account with missing email should return 400."""
         data = {"name": "No Email"}
         resp = client.post(
-            "/api/accounts",
+            "/accounts",
             json=data,
             content_type="application/json",
         )
@@ -75,7 +75,7 @@ class TestCreateRoutes:
         """Creating an account with negative balance should return 400."""
         data = {"name": "Neg", "email": "neg@example.com", "balance": -5.0}
         resp = client.post(
-            "/api/accounts",
+            "/accounts",
             json=data,
             content_type="application/json",
         )
@@ -91,7 +91,7 @@ class TestListRoutes:
 
     def test_list_accounts_empty(self, client):
         """List accounts when database is empty."""
-        resp = client.get("/api/accounts")
+        resp = client.get("/accounts")
         assert resp.status_code == status.HTTP_200_OK
         assert resp.get_json() == []
 
@@ -100,14 +100,14 @@ class TestListRoutes:
         with app.app_context():
             Account(name="User1", email="user1@example.com").create()
             Account(name="User2", email="user2@example.com").create()
-        resp = client.get("/api/accounts")
+        resp = client.get("/accounts")
         assert resp.status_code == status.HTTP_200_OK
         payload = resp.get_json()
         assert len(payload) == 2
 
     def test_list_accounts_root_path(self, client):
         """List accounts at root path with trailing slash."""
-        resp = client.get("/api/accounts/")
+        resp = client.get("/accounts/")
         assert resp.status_code == status.HTTP_200_OK
 
 
@@ -124,7 +124,7 @@ class TestGetRoutes:
             account = Account(**account_data)
             account.create()
             account_id = account.id
-        resp = client.get(f"/api/accounts/{account_id}")
+        resp = client.get(f"/accounts/{account_id}")
         assert resp.status_code == status.HTTP_200_OK
         payload = resp.get_json()
         assert payload["id"] == account_id
@@ -132,7 +132,7 @@ class TestGetRoutes:
 
     def test_get_account_not_found(self, client):
         """Getting a non-existent account should return 404."""
-        resp = client.get("/api/accounts/999")
+        resp = client.get("/accounts/999")
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -151,7 +151,7 @@ class TestUpdateRoutes:
             account_id = account.id
         update_data = {"name": "Updated Name", "email": "updated@example.com"}
         resp = client.put(
-            f"/api/accounts/{account_id}",
+            f"/accounts/{account_id}",
             json=update_data,
             content_type="application/json",
         )
@@ -163,7 +163,7 @@ class TestUpdateRoutes:
     def test_update_account_not_found(self, client):
         """Updating a non-existent account should return 404."""
         resp = client.put(
-            "/api/accounts/999",
+            "/accounts/999",
             json={"name": "Updated"},
             content_type="application/json",
         )
@@ -175,7 +175,7 @@ class TestUpdateRoutes:
             account = Account(**account_data)
             account.create()
             account_id = account.id
-        resp = client.put(f"/api/accounts/{account_id}")
+        resp = client.put(f"/accounts/{account_id}")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_update_account_negative_balance(self, client, app, account_data):
@@ -186,7 +186,7 @@ class TestUpdateRoutes:
             account_id = account.id
         update_data = {"balance": -50.0}
         resp = client.put(
-            f"/api/accounts/{account_id}",
+            f"/accounts/{account_id}",
             json=update_data,
             content_type="application/json",
         )
@@ -206,15 +206,15 @@ class TestDeleteRoutes:
             account = Account(**account_data)
             account.create()
             account_id = account.id
-        resp = client.delete(f"/api/accounts/{account_id}")
+        resp = client.delete(f"/accounts/{account_id}")
         assert resp.status_code == status.HTTP_204_NO_CONTENT
         # Verify it's gone
-        resp2 = client.get(f"/api/accounts/{account_id}")
+        resp2 = client.get(f"/accounts/{account_id}")
         assert resp2.status_code == status.HTTP_404_NOT_FOUND
 
     def test_delete_account_not_found(self, client):
         """Deleting a non-existent account should return 404."""
-        resp = client.delete("/api/accounts/999")
+        resp = client.delete("/accounts/999")
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -227,7 +227,7 @@ class TestSecurityHeaders:
 
     def test_security_headers_present(self, client):
         """Verify that Talisman security headers are in the response."""
-        resp = client.get("/api/accounts/health")
+        resp = client.get("/accounts/health")
         assert resp.status_code == status.HTTP_200_OK
         # Talisman should set X-Content-Type-Options
         assert resp.headers.get("X-Content-Type-Options") == "nosniff"
@@ -238,14 +238,14 @@ class TestSecurityHeaders:
 
     def test_cors_header_present(self, client):
         """Verify that CORS does not block requests."""
-        resp = client.get("/api/accounts/health")
+        resp = client.get("/accounts/health")
         assert resp.status_code == status.HTTP_200_OK
         # CORS should allow the response through
         assert resp.headers.get("Access-Control-Allow-Origin") is not None
 
     def test_method_not_allowed(self, client):
         """Unsupported method should return 405."""
-        resp = client.patch("/api/accounts/1")
+        resp = client.patch("/accounts/1")
         # PATCH on specific account id is not defined
         assert resp.status_code in (
             status.HTTP_404_NOT_FOUND,
@@ -264,7 +264,7 @@ class TestFullCrudFlow:
         """Create, read, update, and delete an account."""
         # CREATE
         resp = client.post(
-            "/api/accounts",
+            "/accounts",
             json=account_data,
             content_type="application/json",
         )
@@ -272,14 +272,14 @@ class TestFullCrudFlow:
         account_id = resp.get_json()["id"]
 
         # READ
-        resp = client.get(f"/api/accounts/{account_id}")
+        resp = client.get(f"/accounts/{account_id}")
         assert resp.status_code == status.HTTP_200_OK
         assert resp.get_json()["name"] == account_data["name"]
 
         # UPDATE
         update_data = {"name": "New Name", "balance": 500.0}
         resp = client.put(
-            f"/api/accounts/{account_id}",
+            f"/accounts/{account_id}",
             json=update_data,
             content_type="application/json",
         )
@@ -288,9 +288,9 @@ class TestFullCrudFlow:
         assert resp.get_json()["balance"] == 500.0
 
         # DELETE
-        resp = client.delete(f"/api/accounts/{account_id}")
+        resp = client.delete(f"/accounts/{account_id}")
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         # VERIFY DELETE
-        resp = client.get(f"/api/accounts/{account_id}")
+        resp = client.get(f"/accounts/{account_id}")
         assert resp.status_code == status.HTTP_404_NOT_FOUND
