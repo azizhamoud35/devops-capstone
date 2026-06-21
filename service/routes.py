@@ -5,7 +5,7 @@ Uses Flask RESTful style with jsonify responses.
 from flask import Blueprint, request, jsonify, abort
 from service.models import Account, DataValidationError
 from service.common import status
-api_bp = Blueprint("api", __name__, url_prefix="/api/accounts")
+api_bp = Blueprint("api", __name__, url_prefix="/accounts")
 
 
 ######################################################################
